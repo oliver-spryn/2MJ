@@ -92,7 +92,7 @@ class Database {
  *
  * @param      string      $query     The SQL query to execute
  * @access     public
- * @return     void
+ * @return     resource
  * @since      v0.1 Dev
  */
 	public function query($query) {
@@ -170,8 +170,6 @@ class Database {
  * @return     mixed
  * @since      v0.1 Dev
  */
-	
-//Fetch the result of a database query and clean-up all of the values for display
 	public function fetch($result, $fetchType = MYSQLI_ASSOC) {
 	//Fetch the array
 		$result = $result->fetch_array($fetchType);
@@ -224,6 +222,21 @@ class Database {
 		return $this->fetch($result, $fetchType);
 	}
 	
+	
+/**
+ * Read the last value from the "position" column in a table, and return the
+ * position value that will occur next
+ *
+ * @param      string      $table     The table to read the "position" value from
+ * @access     public
+ * @return     int
+ * @since      v0.1 Dev
+ */
+	public function nextPosition($table) {
+		$position = $this->quick("SELECT * FROM `" . $table . "` ORDER BY `position` DESC LIMIT 1");
+		return $position['position'] + 1;
+	}
+	
 /*
  * The methods beyond this point are highly specialized to perform specific types of
  * queries on a database. The above "query()" method's purpose is more general, and
@@ -239,7 +252,7 @@ class Database {
  * entries. This method will be called by more specific methods that are defined
  * below. 
  *
- * @param      resource    $input     A series of strings and arrays which will be converted into SQL to execute
+ * @param      array       $input     An array strings and arrays which will be converted into SQL to execute
  * @access     private
  * @return     resource
  * @since      v0.1 Dev
@@ -277,7 +290,7 @@ class Database {
  *
  * @param      mixed       <undefined> An unlimited series of strings and arrays which will be converted into SQL to execute
  * @access     public
- * @return     resource
+ * @return     boolean
  * @since      v0.1 Dev
  */
 	public function insert() {
@@ -362,7 +375,7 @@ class Database {
  *
  * @param      mixed       <undefined> An unlimited series of strings and arrays which will be converted into SQL to execute
  * @access     public
- * @return     resource
+ * @return     boolean
  * @since      v0.1 Dev
  */
 	public function update() {
@@ -379,15 +392,23 @@ class Database {
  *
  * @param      mixed       <undefined> An unlimited series of strings and arrays which will be converted into SQL to execute
  * @access     public
- * @return     resource
+ * @return     boolean
  * @since      v0.1 Dev
  */
-	public function delete() {
-	//Since there is an unknown number of values, then grab all of the supplied arguments...
-		$arguments = func_get_args();
+	public function delete($table, $idNumber, $reorder = true) {
+	//Grab the position of the item scheduled for deletion and reorder the position of the items after the deleted one, if required
+		if ($reorder) {
+			$positionGrabber = $this->quick("SELECT * FROM `" . Validate::required($table) . "` WHERE `id` = '" . Validate::numeric($idNumber, 1) . "'");
+			
+			if (is_numeric($positionGrabber['position'])) {
+				$this->query("UPDATE `" . $table . "` SET `position` = position - 1 WHERE `position` > '" . $positionGrabber['position'] . "'");
+			} else {
+				die("The ID of the entry you are trying to delete does not exist.");
+			}
+		}
 		
-	// ... and execute them in the base method
-		return $this->RUDBase($arguments) ? true : false;
+	//Build the string/array combination to be run by the RUBBase() method
+		return $this->RUDBase(array("DELETE FROM `" . Validate::required($table) . "` WHERE `id` = '" . Validate::numeric($idNumber, 1) . "'")) ? true : false;
 	}
 	
 /**
@@ -399,8 +420,6 @@ class Database {
  * @return     boolean
  * @since      v0.1 Dev
  */
-	
-//A specialized method for checking if a database value exists
 	public function exist($query) {
 		$query = $this->query($query);
 	
