@@ -69,7 +69,7 @@
 	define("STRIPPED_ROOT", $config->installDomain);
 	
 //Include the rest of the system's core. The order of the files in the "$include" array are important! Do not rearrange the order!
-	$include = array("core/Message.php", "core/Database.php");
+	$include = array("core/Message.php", "core/Validate.php", "core/Database.php");
 	
 	foreach($include as $script) {
 		require_once($config->installRoot . "system/server/" . $script);
