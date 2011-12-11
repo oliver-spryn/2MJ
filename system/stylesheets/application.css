@@ -1,0 +1,16 @@
+/**
+ * Drag and Drop Editor Styles
+ * --------------------------------------------------
+ */
+ 
+p.loading {
+	background: url(../images/application/loader.gif) left no-repeat;
+	padding-left: 20px;
+}
+
+.dropHighlight {
+	display: block;
+	width: 100%;
+	height: 3px;
+	background-color: #F90;
+}
